@@ -24,21 +24,48 @@ namespace LinkStorage.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
-            return await _context.Users.ToListAsync();
+            if (_context.Users == null)
+            {
+                return NotFound();
+            }
+            return await _context.Users.Include(u=>u.Authorization).ToListAsync();
+        }
+        // POST: api/Users
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<User>> PostUser(UserSignupDTO userDTO)
+        {
+            if (_context.Users == null)
+            {
+                return Problem("Entity set 'DbLinkStorageContext.Users'  is null.");
+            }
+            if (_context.Authorization.Any(a => userDTO.Email == a.Email))
+            {
+                return BadRequest(new { Message = "Емаил уже занят" });
+            }
+            User user = new User()
+            {
+                Name = userDTO.Name,
+                Surname = userDTO.Surname,
+                Authorization = new Authorization()
+                {
+                    Email = userDTO.Email, Password = userDTO.Password
+                }
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetUser", new { id = user.Id }, user);
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(uint id)
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
+            if (_context.Users == null)
+            {
+                return NotFound();
+            }
             var user = await _context.Users.FindAsync(id);
 
             if (user == null)
@@ -80,20 +107,7 @@ namespace LinkStorage.Controllers
             return NoContent();
         }
 
-        // POST: api/Users
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
-        {
-          if (_context.Users == null)
-          {
-              return Problem("Entity set 'DbLinkStorageContext.Users'  is null.");
-          }
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
-        }
 
         // DELETE: api/Users/5
         [HttpDelete("{id}")]

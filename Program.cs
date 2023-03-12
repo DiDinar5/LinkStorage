@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using LinkStorage.Models;
 using System.Configuration;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json.Serialization;
 //using System.Web.Configuration;
 namespace LinkStorage
 {
@@ -13,14 +14,18 @@ namespace LinkStorage
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(o =>
+            {
+                o.JsonSerializerOptions.ReferenceHandler
+                    = ReferenceHandler.Preserve;
+            });
+
             builder.Services.AddDbContext<DbLinkStorageContext>(opt =>
     opt.UseNpgsql("Server=localhost;Port=5432;Database=SmartLinkDB;User Id=postgres;Password=12345678"));
             //builder.Services.AddDbContext<DbLinkStorageContext>(opt => opt.UseNpgsql(ConfigurationExtensions.GetConnectionString("DbLinkStorageContext")));
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
