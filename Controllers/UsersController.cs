@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LinkStorage.Models;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 
 namespace LinkStorage.Controllers
 {
@@ -22,13 +24,13 @@ namespace LinkStorage.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<object>>> GetUsers()
         {
             if (_context.Users == null)
             {
                 return NotFound();
             }
-            return await _context.Users.Include(u=>u.Authorization).ToListAsync();
+            return await _context.Users.Include(u=>u.Authorization).Select(u=> new { name=u.Name, login=u.Authorization.Email}).ToListAsync();
         }
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -41,7 +43,15 @@ namespace LinkStorage.Controllers
             }
             if (_context.Authorization.Any(a => userDTO.Email == a.Email))
             {
-                return BadRequest(new { Message = "Емаил уже занят" });
+                return BadRequest(new { Message = "Адрес почты уже занят" });
+            }
+            if (!new EmailAddressAttribute().IsValid(userDTO.Email))
+            {
+                return BadRequest(new { Message = "Неправильный формат почты" });
+            }
+            if (userDTO.Password.Length < 8)
+            {
+                return BadRequest(new { Message = "Пароль должен содержать не менее 8 символов" });
             }
             User user = new User()
             {
@@ -55,7 +65,7 @@ namespace LinkStorage.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            return CreatedAtAction("GetUser", new { id = user.Id }, user.Id);
         }
 
         // GET: api/Users/5

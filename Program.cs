@@ -17,7 +17,7 @@ namespace LinkStorage
             builder.Services.AddControllers().AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.ReferenceHandler
-                    = ReferenceHandler.Preserve;
+                    = ReferenceHandler.IgnoreCycles;
             });
 
             builder.Services.AddDbContext<DbLinkStorageContext>(opt =>
@@ -26,7 +26,7 @@ namespace LinkStorage
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            var app = builder.Build();
+             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
