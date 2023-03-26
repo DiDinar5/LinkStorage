@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -18,8 +19,7 @@ namespace LinkStorage.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    Surname = table.Column<string>(type: "text", nullable: false),
-                    AuthorizationId = table.Column<long>(type: "bigint", nullable: false)
+                    Surname = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -30,7 +30,9 @@ namespace LinkStorage.Migrations
                 name: "Authorization",
                 columns: table => new
                 {
-                    UserId = table.Column<long>(type: "bigint", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserInfoId = table.Column<long>(type: "bigint", nullable: false),
                     Email = table.Column<string>(type: "text", nullable: false),
                     Password = table.Column<string>(type: "text", nullable: false)
                 },
@@ -38,8 +40,8 @@ namespace LinkStorage.Migrations
                 {
                     table.PrimaryKey("PK_Authorization", x => x.UserId);
                     table.ForeignKey(
-                        name: "FK_Authorization_Users_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Authorization_Users_UserInfoId",
+                        column: x => x.UserInfoId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -52,24 +54,28 @@ namespace LinkStorage.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     LinkToContract = table.Column<string>(type: "text", nullable: false),
-                    UserId1 = table.Column<long>(type: "bigint", nullable: false),
-                    UserId = table.Column<int>(type: "integer", nullable: false)
+                    DateTimeCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SmartContracts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SmartContracts_Users_UserId1",
-                        column: x => x.UserId1,
+                        name: "FK_SmartContracts_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_SmartContracts_UserId1",
+                name: "IX_Authorization_UserInfoId",
+                table: "Authorization",
+                column: "UserInfoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SmartContracts_UserId",
                 table: "SmartContracts",
-                column: "UserId1");
+                column: "UserId");
         }
 
         /// <inheritdoc />

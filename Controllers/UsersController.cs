@@ -9,6 +9,7 @@ using LinkStorage.Models;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.AspNetCore.JsonPatch;
+using LinkStorage.DTO;
 
 namespace LinkStorage.Controllers
 {
@@ -27,22 +28,20 @@ namespace LinkStorage.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserViewDTO>>> GetUsers()
         {
-            var users = from u in _context.Users
-                        select new UserViewDTO()
-                        {
-                            Name = u.Name,
-                            Surname = u.Surname,
-                            Email = u.Authorization /*Email*/
-                        };
-            if (_context.Users == null)
+            var users = _context.Authorization
+                .Select(x => new UserViewDTO
+                {
+                    Name = x.UserInfo.Name,
+                    Surname = x.UserInfo.Surname,
+                    Email = x.Email
+                });
+            if (!await _context.Users.AnyAsync())
             {
                 return NotFound();
             }
             return await users.ToListAsync();
-        //    return await _context.Users.Include(u=>u.Authorization).Select(u=> new { name=u.Name, login=u.Authorization.Email}).ToListAsync();
         }
         // POST: api/Users
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(UserSignupDTO userDTO)
         {
@@ -62,51 +61,77 @@ namespace LinkStorage.Controllers
             {
                 return BadRequest(new { Message = "Пароль должен содержать не менее 8 символов" });
             }
-            User user = new User()
+            var auth = new Authorization()
             {
-                Name = userDTO.Name,
-                Surname = userDTO.Surname,
-                Authorization = new Authorization()
+                Email = userDTO.Email,
+                Password = userDTO.Password,
+                UserInfo = new User()
                 {
-                    Email = userDTO.Email, Password = userDTO.Password
+                    Name = userDTO.Name,
+                    Surname = userDTO.Surname,
                 }
             };
-            _context.Users.Add(user);
+            _context.Authorization.Add(auth);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user.Id);
+            var actionName = nameof(GetUser);
+            var routeValues = new { id = auth.UserId };
+
+            return CreatedAtAction(actionName, routeValues, auth.UserInfo);
+        }
+
+        [HttpPost("{userId}/SmartContracts")]
+        public async Task<ActionResult<User>> CreateSmartContract(uint userId, SmartContractDTO smartContractDto)
+        {
+            var user = await _context.Users
+                .Include(x => x.SmartContracts)
+                .FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var newContract = new SmartContract
+            {
+                LinkToContract = smartContractDto.LinkToContract,
+                DateTimeCreated = smartContractDto.DateTimeCreated
+            };
+
+            if (user.SmartContracts is null)
+            {
+                user.SmartContracts = new List<SmartContract>();
+            }
+
+            user.SmartContracts.Add(newContract);
+
+            var updatedUser = _context.Users.Update(user);
+
+            await _context.SaveChangesAsync();
+
+            return user;
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(uint id)
         {
-            if (_context.Users == null)
-            {
-                return NotFound();
-            }
-            var user = await _context.Users.FindAsync(id);
-
+            var user = await _context.Users.Include(x => x.SmartContracts).FirstOrDefaultAsync(x => x.Id == id);
             if (user == null)
             {
                 return NotFound();
             }
-
             return user;
         }
+
+        // POST: api/Users
         [HttpPatch("{id}")]
-      //  [Route("{id}/UpdatePartial")]
-        //[ProducesResponseType(StatusCodes.Status204NoContent)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        //[ProducesResponseType(StatusCodes.Status400BadRequest )]
-        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public  ActionResult UpdateUserPartial(uint id, [FromBody] JsonPatchDocument<User> patchDocument )
+        public async Task<ActionResult> UpdateUserPartial(uint id, [FromBody] JsonPatchDocument<User> patchDocument )
         {
-            if (patchDocument == null || id<=0)
+            if (patchDocument == null || id==0)
             {
                 return BadRequest();
             }
-            var existingUser = _context.Users.Where(s=>s.Id==id).FirstOrDefault();
+            var existingUser = await _context.Users.FindAsync(id);
             if (existingUser == null)
                 return NotFound();
             var user = new User
@@ -114,7 +139,6 @@ namespace LinkStorage.Controllers
                 Id = existingUser.Id,
                 Name = existingUser.Name,
                 Surname = existingUser.Surname,
-                Authorization= existingUser.Authorization,
                 SmartContracts= existingUser.SmartContracts
             };
             patchDocument.ApplyTo(user,ModelState);
@@ -124,58 +148,11 @@ namespace LinkStorage.Controllers
 
             existingUser.Name = user.Name;
             existingUser.Surname = user.Surname;
-            existingUser.Authorization = user.Authorization;
             existingUser.SmartContracts = user.SmartContracts;  
-            //try
-            //{
-            //    await _context.SaveChangesAsync();
-            //}
-            //catch (DbUpdateConcurrencyException)
-            //{
-            //    if (!UserExists(id))
-            //    {
-            //        return NotFound();
-            //    }
-            //    else
-            //    {
-            //        throw;
-            //    }
-            //}
-
-            return NoContent();
+            _context.SaveChanges();
+           
+            return Ok(new {Message = "User updated"});
         }
-        // PUT: api/Users/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(uint id, User user)
-        {
-            if (id != user.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(user).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-
-
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(uint id)
@@ -193,7 +170,7 @@ namespace LinkStorage.Controllers
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new {Message = "User deleted"});
         }
 
         private bool UserExists(uint id)

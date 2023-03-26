@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LinkStorage.Models
+namespace LinkStorage.DTO
 {
     public class UserViewDTO
     {
@@ -10,6 +10,6 @@ namespace LinkStorage.Models
         [Required]
         public string Surname { get; set; }
         [Required]
-        public Authorization Email { get; set; }
+        public string Email { get; set; }
     }
 }

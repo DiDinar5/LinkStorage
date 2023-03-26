@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LinkStorage.Models
+namespace LinkStorage.DTO
 {
     public class UserSignupDTO
     {
