@@ -10,6 +10,9 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.AspNetCore.JsonPatch;
 using LinkStorage.DTO;
+using System.Text;
+using System.Security.Cryptography;
+using LinkStorage.Safety;
 
 namespace LinkStorage.Controllers
 {
@@ -18,7 +21,7 @@ namespace LinkStorage.Controllers
     public class UsersController : ControllerBase
     {
         private readonly DbLinkStorageContext _context;
-
+        Hash hash = new Hash();
         public UsersController(DbLinkStorageContext context)
         {
             _context = context;
@@ -64,7 +67,7 @@ namespace LinkStorage.Controllers
             var auth = new Authorization()
             {
                 Email = userDTO.Email,
-                Password = userDTO.Password,
+                Password= Hash.HashPassword(userDTO.Password),
                 UserInfo = new User()
                 {
                     Name = userDTO.Name,
@@ -94,7 +97,7 @@ namespace LinkStorage.Controllers
             var newContract = new SmartContract
             {
                 LinkToContract = smartContractDto.LinkToContract,
-                DateTimeCreated = smartContractDto.DateTimeCreated
+                DateTimeCreated = DateTime.UtcNow
             };
 
             if (user.SmartContracts is null)
@@ -171,6 +174,25 @@ namespace LinkStorage.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new {Message = "User deleted"});
+        }
+        // DELETE: api/Users/5
+        [HttpDelete("{Id}/SmartContract")]
+        public async Task<IActionResult> DeleteLink(uint Id)
+        {
+            if (_context.SmartContracts == null)
+            {
+                return NotFound();
+            }
+            var link = await _context.SmartContracts.FindAsync(Id);
+            if (link == null)
+            {
+                return NotFound();
+            }
+
+            _context.SmartContracts.Remove(link);
+            await _context.SaveChangesAsync();
+
+            return Ok(new {Message = "Link deleted"});
         }
 
         private bool UserExists(uint id)
