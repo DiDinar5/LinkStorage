@@ -1,19 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using System.Configuration;
-using Microsoft.Extensions.Configuration;
-using System.Text.Json.Serialization;
 using LinkStorage.DataBase;
 using LinkStorage.Repository.IRepository;
 using LinkStorage.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using DocumentFormat.OpenXml.Drawing.Diagrams;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
-//using System.Web.Configuration;
 namespace LinkStorage
 {
+
     public class Program
     {
         public static void Main(string[] args)
@@ -24,7 +20,7 @@ namespace LinkStorage
             {
                 opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
             });
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();//DI.Cервис создаются единожды для каждого запроса.
 
             var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
@@ -48,7 +44,6 @@ namespace LinkStorage
             {
 
             }).AddNewtonsoftJson().AddXmlDataContractSerializerFormatters();
-            // builder.Services.AddControllersWithViews();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -98,7 +93,6 @@ namespace LinkStorage
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // app.UseRouting();
 
             app.MapControllers();
 

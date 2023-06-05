@@ -7,7 +7,6 @@ namespace LinkStorage.DataBase
     {
         public DbLinkStorageContext(DbContextOptions<DbLinkStorageContext> options) : base(options)
         {
-            Database.EnsureCreated();
             Database.Migrate();
         }
         public DbSet<User> Users { get; set; }
@@ -16,6 +15,7 @@ namespace LinkStorage.DataBase
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<User>();
+            modelBuilder.Entity<SmartContract>().HasKey(l=>l.LinkToContract);
         }
     }
 }

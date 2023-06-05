@@ -16,8 +16,8 @@ namespace LinkStorage.Controllers
         protected APIResponse _response;
         public UserAuthorization(IUserRepository userRepository)
         {
-                _userRepository= userRepository;
-                this._response = new ();
+            _userRepository = userRepository;
+            this._response = new();
         }
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO model)
@@ -26,8 +26,8 @@ namespace LinkStorage.Controllers
             if (loginResponse.User == null || string.IsNullOrEmpty(loginResponse.Token))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess= false;
-                _response.ErrorMessages.Add("Login or password is incorrect" );
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("Login or password is incorrect");
                 return BadRequest(_response);
             }
             _response.StatusCode = HttpStatusCode.OK;
@@ -40,7 +40,7 @@ namespace LinkStorage.Controllers
         public async Task<IActionResult> Register([FromBody] RegistrationRequestDTO model)
         {
             bool ifUserEmailUnique = _userRepository.IsUniqueUser(model.Email);
-            if(ifUserEmailUnique!=null)
+            if (!ifUserEmailUnique)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
@@ -61,8 +61,8 @@ namespace LinkStorage.Controllers
                 _response.ErrorMessages.Add("The password must contain at least 8 characters");
                 return BadRequest(_response);
             }
-            var user =await  _userRepository.Register(model);   
-            if(user == null)
+            var user = await _userRepository.Register(model);
+            if (user == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
                 _response.IsSuccess = false;
@@ -72,7 +72,7 @@ namespace LinkStorage.Controllers
             _response.StatusCode = HttpStatusCode.OK;
             _response.IsSuccess = true;
             _response.SuccessMessage.Add("Congratulations! The user is registered");
-            return Ok(_response) ;
+            return Ok(_response);
         }
     }
 }

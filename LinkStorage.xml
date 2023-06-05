@@ -107,5 +107,22 @@
         <member name="M:LinkStorage.Migrations.Initial4.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:LinkStorage.Migrations.initial5">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.initial5.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.initial5.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.initial5.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:LinkStorage.Safety.Hash">
+            <summary>
+            Класс отвечающий за хеширование паролей(в скором времени добавиться хеш+соль)
+            </summary>
+        </member>
     </members>
 </doc>

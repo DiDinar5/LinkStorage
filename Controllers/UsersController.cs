@@ -103,7 +103,7 @@ namespace LinkStorage.Controllers
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add("The user does not exist");
                 return NotFound(_response);
-            }
+            }   
             return user;
         }
         /// <summary>

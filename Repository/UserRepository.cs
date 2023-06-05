@@ -20,9 +20,9 @@ namespace LinkStorage.Repository
             secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
 
-        public bool IsUniqueUser(string username)
+        public bool IsUniqueUser(string email)
         {
-            var user = _context.Users.FirstOrDefault(x => x.Name == username);
+            var user = _context.Users.FirstOrDefault(x => x.Email == email);
             if(user == null)
             {
                 return true;
@@ -67,6 +67,7 @@ namespace LinkStorage.Repository
 
         public async Task<User> Register(RegistrationRequestDTO registrationRequestDTO)
         {
+            
             User user = new()
             {
                 Name = registrationRequestDTO.Name,
