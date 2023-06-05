@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>LinkStorage</name>
+    </assembly>
+    <members>
+        <member name="M:LinkStorage.Controllers.UsersController.GetUsers">
+            <summary>
+            Посмотреть всех пользователей(:all)
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:LinkStorage.Controllers.UsersController.CreateSmartContract(System.UInt32,LinkStorage.DTO.SmartContractDTO)">
+            <summary>
+            Добавить к существующему пользователю смарт-контракт(:admin)
+            </summary>
+            <param name="userId"></param>
+            <param name="smartContractDto"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LinkStorage.Controllers.UsersController.GetUser(System.UInt32)">
+            <summary>
+            Посмотреть отдельного пользователя(:admin)
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LinkStorage.Controllers.UsersController.UpdateUserPartial(System.UInt32,Microsoft.AspNetCore.JsonPatch.JsonPatchDocument{LinkStorage.Models.User})">
+            <summary>
+            Изменение данных о пользователе(:admin)
+            </summary>
+            <param name="id"></param>
+            <param name="patchDocument"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LinkStorage.Controllers.UsersController.DeleteUser(System.UInt32)">
+            <summary>
+            Удаление пользователя(:admin)
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LinkStorage.Controllers.UsersController.DeleteLink(System.UInt32)">
+            <summary>
+            Удаление смарт-контракта у существующего пользователя(:admin)
+            </summary>
+            <param name="Id"></param>
+            <returns></returns>
+        </member>
+        <member name="T:LinkStorage.Migrations.Initial">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:LinkStorage.Migrations.Initial1">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial1.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial1.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial1.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:LinkStorage.Migrations.Initial2">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial2.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial2.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial2.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:LinkStorage.Migrations.Initial3">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial3.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial3.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial3.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:LinkStorage.Migrations.Initial4">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial4.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial4.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial4.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

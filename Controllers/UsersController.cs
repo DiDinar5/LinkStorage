@@ -1,41 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LinkStorage.Models;
-using System.ComponentModel.DataAnnotations;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.AspNetCore.JsonPatch;
 using LinkStorage.DTO;
-using System.Text;
-using System.Security.Cryptography;
-using LinkStorage.Safety;
+using LinkStorage.DataBase;
+using Microsoft.AspNetCore.Authorization;
+using System.Net.Mime;
+using System.Net;
 
 namespace LinkStorage.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/users")]
+    [Produces(MediaTypeNames.Application.Json)]
+    [Consumes(MediaTypeNames.Application.Json)]
     [ApiController]
     public class UsersController : ControllerBase
     {
         private readonly DbLinkStorageContext _context;
-        Hash hash = new Hash();
+        protected APIResponse _response;
+
         public UsersController(DbLinkStorageContext context)
         {
             _context = context;
+            this._response = new();
         }
-
+        /// <summary>
+        /// Посмотреть всех пользователей(:all)
+        /// </summary>
+        /// <returns></returns>
         // GET: api/Users
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserViewDTO>>> GetUsers()
+        [HttpGet("get")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
-            var users = _context.Authorization
-                .Select(x => new UserViewDTO
+            var users = _context.Users
+                .Select(x => new UserDTO
                 {
-                    Name = x.UserInfo.Name,
-                    Surname = x.UserInfo.Surname,
+                    Name = x.Name,
+                    Surname = x.Surname,
                     Email = x.Email
                 });
             if (!await _context.Users.AnyAsync())
@@ -44,46 +46,14 @@ namespace LinkStorage.Controllers
             }
             return await users.ToListAsync();
         }
-        // POST: api/Users
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(UserSignupDTO userDTO)
-        {
-            if (_context.Users == null)
-            {
-                return Problem("Entity set 'DbLinkStorageContext.Users'  is null.");
-            }
-            if (_context.Authorization.Any(a => userDTO.Email == a.Email))
-            {
-                return BadRequest(new { Message = "Адрес почты уже занят" });
-            }
-            if (!new EmailAddressAttribute().IsValid(userDTO.Email))
-            {
-                return BadRequest(new { Message = "Неправильный формат почты" });
-            }
-            if (userDTO.Password.Length < 8)
-            {
-                return BadRequest(new { Message = "Пароль должен содержать не менее 8 символов" });
-            }
-            var auth = new Authorization()
-            {
-                Email = userDTO.Email,
-                Password= Hash.HashPassword(userDTO.Password),
-                UserInfo = new User()
-                {
-                    Name = userDTO.Name,
-                    Surname = userDTO.Surname,
-                }
-            };
-            _context.Authorization.Add(auth);
-            await _context.SaveChangesAsync();
-
-            var actionName = nameof(GetUser);
-            var routeValues = new { id = auth.UserId };
-
-            return CreatedAtAction(actionName, routeValues, auth.UserInfo);
-        }
-
+        /// <summary>
+        /// Добавить к существующему пользователю смарт-контракт(:admin)
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="smartContractDto"></param>
+        /// <returns></returns>
         [HttpPost("{userId}/SmartContracts")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<User>> CreateSmartContract(uint userId, SmartContractDTO smartContractDto)
         {
             var user = await _context.Users
@@ -91,7 +61,10 @@ namespace LinkStorage.Controllers
                 .FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
             {
-                return NotFound();
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("The user does not exist");
+                return NotFound(_response);
             }
 
             var newContract = new SmartContract
@@ -113,21 +86,35 @@ namespace LinkStorage.Controllers
 
             return user;
         }
-
+        /// <summary>
+        /// Посмотреть отдельного пользователя(:admin)
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // GET: api/Users/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<User>> GetUser(uint id)
         {
             var user = await _context.Users.Include(x => x.SmartContracts).FirstOrDefaultAsync(x => x.Id == id);
             if (user == null)
             {
-                return NotFound();
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("The user does not exist");
+                return NotFound(_response);
             }
             return user;
         }
-
+        /// <summary>
+        /// Изменение данных о пользователе(:admin)
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="patchDocument"></param>
+        /// <returns></returns>
         // POST: api/Users
         [HttpPatch("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult> UpdateUserPartial(uint id, [FromBody] JsonPatchDocument<User> patchDocument )
         {
             if (patchDocument == null || id==0)
@@ -136,7 +123,12 @@ namespace LinkStorage.Controllers
             }
             var existingUser = await _context.Users.FindAsync(id);
             if (existingUser == null)
-                return NotFound();
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("The user does not exist");
+                return NotFound(_response);
+            }
             var user = new User
             {
                 Id = existingUser.Id,
@@ -153,51 +145,67 @@ namespace LinkStorage.Controllers
             existingUser.Surname = user.Surname;
             existingUser.SmartContracts = user.SmartContracts;  
             _context.SaveChanges();
-           
-            return Ok(new {Message = "User updated"});
+
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.IsSuccess = true;
+            _response.SuccessMessage.Add("User changed");
+            return Ok(_response);
         }
+        /// <summary>
+        /// Удаление пользователя(:admin)
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
+
         public async Task<IActionResult> DeleteUser(uint id)
         {
-            if (_context.Users == null)
-            {
-                return NotFound();
-            }
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound();
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("The user does not exist");
+                return NotFound(_response);
             }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return Ok(new {Message = "User deleted"});
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.IsSuccess = true;
+            _response.SuccessMessage.Add("User deleted");
+            return Ok(_response);
         }
+        /// <summary>
+        /// Удаление смарт-контракта у существующего пользователя(:admin)
+        /// </summary>
+        /// <param name="Id"></param>
+        /// <returns></returns>
         // DELETE: api/Users/5
         [HttpDelete("{Id}/SmartContract")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteLink(uint Id)
         {
-            if (_context.SmartContracts == null)
-            {
-                return NotFound();
-            }
             var link = await _context.SmartContracts.FindAsync(Id);
             if (link == null)
             {
-                return NotFound();
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("The smart-contract does not exist");
+                return NotFound(_response);
             }
 
             _context.SmartContracts.Remove(link);
             await _context.SaveChangesAsync();
 
-            return Ok(new {Message = "Link deleted"});
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.IsSuccess = true;
+            _response.SuccessMessage.Add("Smart-contract deleted");
+            return Ok(_response);
         }
 
-        private bool UserExists(uint id)
-        {
-            return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
     }
 }

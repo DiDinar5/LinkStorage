@@ -18,7 +18,7 @@ namespace LinkStorage.Safety
                 {
                     builder.Append(bytes[i].ToString("x2"));
                 }
-                return builder.ToString();
+                return builder.ToString();      
             }
 
         }

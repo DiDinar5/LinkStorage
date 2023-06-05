@@ -2,12 +2,8 @@
 
 namespace LinkStorage.DTO
 {
-    public class UserSignupDTO
+    public class LoginRequestDTO
     {
-        [Required]
-        public string Name { get; set; }
-        [Required]
-        public string Surname { get; set; }
         [Required]
         public string Email { get; set; }
         [Required]
