@@ -119,6 +119,30 @@
         <member name="M:LinkStorage.Migrations.initial5.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:LinkStorage.Migrations.Initial6">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial6.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial6.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial6.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:LinkStorage.Migrations.Initial7">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial7.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial7.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:LinkStorage.Migrations.Initial7.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:LinkStorage.Safety.Hash">
             <summary>
             Класс отвечающий за хеширование паролей(в скором времени добавиться хеш+соль)

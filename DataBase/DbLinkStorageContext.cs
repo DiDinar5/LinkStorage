@@ -15,7 +15,7 @@ namespace LinkStorage.DataBase
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<User>();
-            modelBuilder.Entity<SmartContract>().HasKey(l=>l.LinkToContract);
+            modelBuilder.Entity<SmartContract>();
         }
     }
 }

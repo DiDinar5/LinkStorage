@@ -6,7 +6,6 @@ using LinkStorage.DTO;
 using LinkStorage.DataBase;
 using Microsoft.AspNetCore.Authorization;
 using System.Net.Mime;
-using System.Net;
 
 namespace LinkStorage.Controllers
 {
@@ -17,12 +16,12 @@ namespace LinkStorage.Controllers
     public class UsersController : ControllerBase
     {
         private readonly DbLinkStorageContext _context;
-        protected APIResponse _response;
+        protected OutputMessages output;
 
         public UsersController(DbLinkStorageContext context)
         {
             _context = context;
-            this._response = new();
+            this.output = new();
         }
         /// <summary>
         /// Посмотреть всех пользователей(:all)
@@ -60,12 +59,7 @@ namespace LinkStorage.Controllers
                 .Include(x => x.SmartContracts)
                 .FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
-            {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add("The user does not exist");
-                return NotFound(_response);
-            }
+                return NotFound("The user does not exist");
 
             var newContract = new SmartContract
             {
@@ -98,12 +92,8 @@ namespace LinkStorage.Controllers
         {
             var user = await _context.Users.Include(x => x.SmartContracts).FirstOrDefaultAsync(x => x.Id == id);
             if (user == null)
-            {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add("The user does not exist");
-                return NotFound(_response);
-            }   
+                return NotFound("The user does not exist");
+            
             return user;
         }
         /// <summary>
@@ -123,12 +113,7 @@ namespace LinkStorage.Controllers
             }
             var existingUser = await _context.Users.FindAsync(id);
             if (existingUser == null)
-            {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add("The user does not exist");
-                return NotFound(_response);
-            }
+                return NotFound("The user does not exist");
             var user = new User
             {
                 Id = existingUser.Id,
@@ -146,10 +131,8 @@ namespace LinkStorage.Controllers
             existingUser.SmartContracts = user.SmartContracts;  
             _context.SaveChanges();
 
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.IsSuccess = true;
-            _response.SuccessMessage.Add("User changed");
-            return Ok(_response);
+            output.Messages.Add("User changed");
+            return Ok(output);
         }
         /// <summary>
         /// Удаление пользователя(:admin)
@@ -164,20 +147,13 @@ namespace LinkStorage.Controllers
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-            {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add("The user does not exist");
-                return NotFound(_response);
-            }
+            return NotFound("The user does not exist");
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.IsSuccess = true;
-            _response.SuccessMessage.Add("User deleted");
-            return Ok(_response);
+            output.Messages.Add("User deleted");
+            return Ok(output);
         }
         /// <summary>
         /// Удаление смарт-контракта у существующего пользователя(:admin)
@@ -191,20 +167,13 @@ namespace LinkStorage.Controllers
         {
             var link = await _context.SmartContracts.FindAsync(Id);
             if (link == null)
-            {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add("The smart-contract does not exist");
-                return NotFound(_response);
-            }
+                return NotFound("The smart-contract does not exist");
 
             _context.SmartContracts.Remove(link);
             await _context.SaveChangesAsync();
 
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.IsSuccess = true;
-            _response.SuccessMessage.Add("Smart-contract deleted");
-            return Ok(_response);
+            output.Messages.Add("Smart - contract deleted");
+            return Ok(output);
         }
 
     }
