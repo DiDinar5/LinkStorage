@@ -48,16 +48,16 @@ namespace LinkStorage.Controllers
         /// <summary>
         /// Добавить к существующему пользователю смарт-контракт(:admin)
         /// </summary>
-        /// <param name="userId"></param>
+        /// <param name="email"></param>
         /// <param name="smartContractDto"></param>
         /// <returns></returns>
-        [HttpPost("{userId}/SmartContracts")]
+        [HttpPost("{email}/SmartContracts")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult<User>> CreateSmartContract(uint userId, SmartContractDTO smartContractDto)
+        public async Task<ActionResult<User>> CreateSmartContract(string email, SmartContractDTO smartContractDto)
         {
             var user = await _context.Users
                 .Include(x => x.SmartContracts)
-                .FirstOrDefaultAsync(x => x.Id == userId);
+                .FirstOrDefaultAsync(x => x.Email == email);
             if (user == null)
                 return NotFound("The user does not exist");
 
@@ -78,19 +78,19 @@ namespace LinkStorage.Controllers
 
             await _context.SaveChangesAsync();
 
-            return user;
+            return Created(user.Email,user.SmartContracts);
         }
         /// <summary>
         /// Посмотреть отдельного пользователя(:admin)
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="email"></param>
         /// <returns></returns>
         // GET: api/Users/5
-        [HttpGet("{id}")]
+        [HttpGet("{email}")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult<User>> GetUser(uint id)
+        public async Task<ActionResult<User>> GetUser(string email)
         {
-            var user = await _context.Users.Include(x => x.SmartContracts).FirstOrDefaultAsync(x => x.Id == id);
+            var user = await _context.Users.Include(x => x.SmartContracts).FirstOrDefaultAsync(x => x.Email == email);
             if (user == null)
                 return NotFound("The user does not exist");
             
