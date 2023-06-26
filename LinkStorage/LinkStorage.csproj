@@ -21,6 +21,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="LinkStorage.Tests\**" />
+    <Content Remove="LinkStorage.Tests\**" />
+    <EmbeddedResource Remove="LinkStorage.Tests\**" />
+    <None Remove="LinkStorage.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="7.0.4" />
