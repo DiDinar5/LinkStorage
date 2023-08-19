@@ -37,7 +37,7 @@ namespace LinkStorage.Controllers
                 return BadRequest("Email already exists");
 
             if (!new EmailAddressAttribute().IsValid(model.Email))
-                    return BadRequest("Incorrect mail format");
+                return BadRequest("Incorrect mail format");
 
             if (model.Password.Length < 8)
                 return BadRequest("The password must be at least 8 characters long ");

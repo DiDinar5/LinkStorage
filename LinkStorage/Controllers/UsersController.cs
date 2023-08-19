@@ -33,17 +33,19 @@ namespace LinkStorage.Controllers
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
             var users = _context.Users
-                .Select(x => new UserDTO
-                {
-                    Name = x.Name,
-                    Surname = x.Surname,
-                    Email = x.Email
-                });
+           .Select(x => new UserDTO
+           {
+               Name = x.Name,
+               Surname = x.Surname,
+               Email = x.Email
+           });
             if (!await _context.Users.AnyAsync())
             {
                 return NotFound();
             }
             return await users.ToListAsync();
+
+
         }
         /// <summary>
         /// Добавить к существующему пользователю смарт-контракт(:admin)
@@ -55,30 +57,41 @@ namespace LinkStorage.Controllers
         [Authorize(Roles = "admin")]
         public async Task<ActionResult<User>> CreateSmartContract(string email, SmartContractDTO smartContractDto)
         {
-            var user = await _context.Users
+            try
+            {
+                var user = await _context.Users
                 .Include(x => x.SmartContracts)
                 .FirstOrDefaultAsync(x => x.Email == email);
-            if (user == null)
-                return NotFound("The user does not exist");
+                if (user == null)
+                    throw new ArgumentNullException(nameof(user));
 
-            var newContract = new SmartContract
-            {
-                LinkToContract = smartContractDto.LinkToContract,
-                DateTimeCreated = DateTime.UtcNow
-            };
+                var newContract = new SmartContract
+                {
+                    LinkToContract = smartContractDto.LinkToContract,
+                    DateTimeCreated = DateTime.UtcNow
+                };
 
-            if (user.SmartContracts is null)
-            {
-                user.SmartContracts = new List<SmartContract>();
+                if (user.SmartContracts is null)
+                {
+                    user.SmartContracts = new List<SmartContract>();
+                }
+
+                user.SmartContracts.Add(newContract);
+
+                var updatedUser = _context.Users.Update(user);
+
+                await _context.SaveChangesAsync();
+
+                return Created(user.Email, user.SmartContracts);
             }
-
-            user.SmartContracts.Add(newContract);
-
-            var updatedUser = _context.Users.Update(user);
-
-            await _context.SaveChangesAsync();
-
-            return Created(user.Email,user.SmartContracts);
+            catch(ArgumentNullException a)
+            {
+                return BadRequest("Kukuebat");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
         /// <summary>
         /// Посмотреть отдельного пользователя(:admin)
@@ -93,7 +106,7 @@ namespace LinkStorage.Controllers
             var user = await _context.Users.Include(x => x.SmartContracts).FirstOrDefaultAsync(x => x.Email == email);
             if (user == null)
                 return NotFound("The user does not exist");
-            
+
             return user;
         }
         /// <summary>
@@ -105,9 +118,9 @@ namespace LinkStorage.Controllers
         // POST: api/Users
         [HttpPatch("{id}")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult> UpdateUserPartial(uint id, [FromBody] JsonPatchDocument<User> patchDocument )
+        public async Task<ActionResult> UpdateUserPartial(uint id, [FromBody] JsonPatchDocument<User> patchDocument)
         {
-            if (patchDocument == null || id==0)
+            if (patchDocument == null || id == 0)
             {
                 return BadRequest();
             }
@@ -119,16 +132,16 @@ namespace LinkStorage.Controllers
                 Id = existingUser.Id,
                 Name = existingUser.Name,
                 Surname = existingUser.Surname,
-                SmartContracts= existingUser.SmartContracts
+                SmartContracts = existingUser.SmartContracts
             };
-            patchDocument.ApplyTo(user,ModelState);
+            patchDocument.ApplyTo(user, ModelState);
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             existingUser.Name = user.Name;
             existingUser.Surname = user.Surname;
-            existingUser.SmartContracts = user.SmartContracts;  
+            existingUser.SmartContracts = user.SmartContracts;
             _context.SaveChanges();
 
             output.Messages.Add("User changed");
@@ -147,7 +160,7 @@ namespace LinkStorage.Controllers
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-            return NotFound("The user does not exist");
+                return NotFound("The user does not exist");
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();

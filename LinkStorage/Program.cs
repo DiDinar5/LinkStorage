@@ -7,6 +7,11 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using NLog.Web;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore;
+using LinkStorage.Log;
+
 namespace LinkStorage
 {
 
@@ -16,13 +21,16 @@ namespace LinkStorage
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            //Установка файла для логгирования
+            builder.Logging.AddFile(Path.Combine(Directory.GetCurrentDirectory(), "logger.txt"));
+            
             builder.Services.AddDbContext<DbLinkStorageContext>(opt =>
             {
                 opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
             });
             builder.Services.AddScoped<IUserRepository, UserRepository>();//DI.Cервис создаются единожды для каждого запроса.
 
-            var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
+            var key  = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
             builder.Services.AddAuthentication(x =>
             {
@@ -95,7 +103,10 @@ namespace LinkStorage
 
 
             app.MapControllers();
-
+            app.Run(async (context) =>
+            {
+                app.Logger.LogInformation($"Path: {context.Request.Path} Time:{DateTime.Now.ToLongTimeString()}");
+            });
             app.Run();
         }
     }
