@@ -6,6 +6,7 @@ using LinkStorage.DTO;
 using LinkStorage.DataBase;
 using Microsoft.AspNetCore.Authorization;
 using System.Net.Mime;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 
 namespace LinkStorage.Controllers
 {
@@ -17,11 +18,13 @@ namespace LinkStorage.Controllers
     {
         private readonly DbLinkStorageContext _context;
         protected OutputMessages output;
-
-        public UsersController(DbLinkStorageContext context)
+        private readonly ILogger _logger;
+        public UsersController(DbLinkStorageContext context, ILogger<UsersController> logger)
         {
             _context = context;
             this.output = new();
+            _logger = logger;
+            _logger.LogDebug("NLog is integrated to Book Controller");
         }
         /// <summary>
         /// Посмотреть всех пользователей(:all)
@@ -63,7 +66,7 @@ namespace LinkStorage.Controllers
                 .Include(x => x.SmartContracts)
                 .FirstOrDefaultAsync(x => x.Email == email);
                 if (user == null)
-                    throw new ArgumentNullException(nameof(user));
+                    throw new ArgumentNullException(nameof(email));
 
                 var newContract = new SmartContract
                 {
@@ -84,12 +87,14 @@ namespace LinkStorage.Controllers
 
                 return Created(user.Email, user.SmartContracts);
             }
-            catch(ArgumentNullException a)
+            catch (ArgumentNullException a)
             {
-                return BadRequest("Kukuebat");
+                _logger.LogError(a.Message);
+                return BadRequest(a.Message);
             }
             catch (Exception e)
             {
+                _logger.LogError(e.Message);
                 return BadRequest(e.Message);
             }
         }

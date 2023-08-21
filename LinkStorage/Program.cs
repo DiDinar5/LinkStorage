@@ -8,10 +8,7 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using NLog.Web;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore;
-using LinkStorage.Log;
-
+using NLog;
 namespace LinkStorage
 {
 
@@ -19,54 +16,61 @@ namespace LinkStorage
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            //Установка файла для логгирования
-            builder.Logging.AddFile(Path.Combine(Directory.GetCurrentDirectory(), "logger.txt"));
-            
-            builder.Services.AddDbContext<DbLinkStorageContext>(opt =>
+            var logger = LogManager.Setup()
+                .LoadConfigurationFromAppSettings()
+                .GetCurrentClassLogger();
+            logger.Debug("init main");
+            try
             {
-                opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
-            });
-            builder.Services.AddScoped<IUserRepository, UserRepository>();//DI.Cервис создаются единожды для каждого запроса.
+                var builder = WebApplication.CreateBuilder(args);
 
-            var key  = builder.Configuration.GetValue<string>("ApiSettings:Secret");
+                //Nlog: Setup Nlog for Dependency Injection 
+                builder.Logging.ClearProviders();
+                builder.Host.UseNLog();
 
-            builder.Services.AddAuthentication(x =>
-            {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(x =>
-            {
-                x.RequireHttpsMetadata = false;
-                x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
+                builder.Services.AddDbContext<DbLinkStorageContext>(opt =>
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
-                };
-            });
-            builder.Services.AddControllers(options =>
-            {
-
-            }).AddNewtonsoftJson().AddXmlDataContractSerializerFormatters();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(options =>
-            {
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Description =
-                "JWT Authorization header using the Bearer scheme. \r\n\r\n" +
-                "Enter 'Bearer [space] and then your token in the text input below. \r\n\r\n" +
-                "Example: \"Bearer 12345qwerty\"",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Scheme = "Bearer"
+                    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
                 });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                builder.Services.AddScoped<IUserRepository, UserRepository>();//DI.Cервис создаются единожды для каждого запроса.
+
+                var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
+
+                builder.Services.AddAuthentication(x =>
                 {
+                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                }).AddJwtBearer(x =>
+                {
+                    x.RequireHttpsMetadata = false;
+                    x.SaveToken = true;
+                    x.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
+                builder.Services.AddControllers(options =>
+                {
+
+                }).AddNewtonsoftJson().AddXmlDataContractSerializerFormatters();
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen(options =>
+                {
+                    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Description =
+                    "JWT Authorization header using the Bearer scheme. \r\n\r\n" +
+                    "Enter 'Bearer [space] and then your token in the text input below. \r\n\r\n" +
+                    "Example: \"Bearer 12345qwerty\"",
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Scheme = "Bearer"
+                    });
+                    options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                    {
                 {
                     new OpenApiSecurityScheme
                     {
@@ -81,33 +85,35 @@ namespace LinkStorage
                     },
                         new List<string>()
                     }
-            });
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                });
+                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
-                options.IncludeXmlComments(xmlPath);//сгенерированный документ передается в сваггер
-            });
-            var app = builder.Build();
+                    options.IncludeXmlComments(xmlPath);//сгенерированный документ передается в сваггер
+                });
+                var app = builder.Build();
 
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                // Configure the HTTP request pipeline.
+                if (app.Environment.IsDevelopment())
+                {
+                    app.UseSwagger();
+                    app.UseSwaggerUI();
+                }
+
+                app.UseHttpsRedirection();
+                app.UseAuthentication();
+                app.UseAuthorization();
+
+
+                app.MapControllers();
+                app.Run();
             }
-
-            app.UseHttpsRedirection();
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-            app.Run(async (context) =>
+            catch(Exception ex)
             {
-                app.Logger.LogInformation($"Path: {context.Request.Path} Time:{DateTime.Now.ToLongTimeString()}");
-            });
-            app.Run();
+                logger.Error(ex); 
+            }
         }
+
     }
 }
