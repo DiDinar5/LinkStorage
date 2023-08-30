@@ -9,9 +9,10 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using NLog.Web;
 using NLog;
+using LinkStorage.Middlewares;
+
 namespace LinkStorage
 {
-
     public class Program
     {
         public static void Main(string[] args)
@@ -91,6 +92,9 @@ namespace LinkStorage
 
                     options.IncludeXmlComments(xmlPath);//сгенерированный документ передается в сваггер
                 });
+
+                builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
+
                 var app = builder.Build();
 
 
@@ -105,6 +109,7 @@ namespace LinkStorage
                 app.UseAuthentication();
                 app.UseAuthorization();
 
+                app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
                 app.MapControllers();
                 app.Run();
